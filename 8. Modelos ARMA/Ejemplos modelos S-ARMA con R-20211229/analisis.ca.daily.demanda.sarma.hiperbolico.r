@@ -13,12 +13,12 @@ par(mfrow=c(1,1))
 np = length(y)
 
 ejex.mes = seq(fechas[1],fechas[np], "months")
-ejex.año = seq(fechas[1],fechas[np],"years")
+ejex.ano = seq(fechas[1],fechas[np],"years")
 
 
 plot(fechas,y, xaxt="n", panel.first = grid(),type='l',col='darkgray')
 axis.Date(1, at=ejex.mes, format="%m/%y")
-axis.Date(1, at=ejex.año, labels = FALSE, tcl = -0.2)
+axis.Date(1, at=ejex.ano, labels = FALSE, tcl = -0.2)
 
 #-------------- validacion cruzada
 T = length(y)
@@ -44,12 +44,12 @@ y1 = fitted(M1)
 np = length(ys)
 fechas = fechas[1:np]
 ejex.mes = seq(fechas[1],fechas[np], "months")
-ejex.año = seq(fechas[1],fechas[np],"years")
+ejex.aï¿½o = seq(fechas[1],fechas[np],"years")
 
 
 plot(fechas,ys, xaxt="n", panel.first = grid(),type='l',col='darkgray')
 axis.Date(1, at=ejex.mes, format="%m/%y")
-axis.Date(1, at=ejex.año, labels = FALSE, tcl = -0.2)
+axis.Date(1, at=ejex.aï¿½o, labels = FALSE, tcl = -0.2)
 lines(fechas,y1,col='red')
 
 ye = resid(M1)
@@ -57,7 +57,7 @@ ye = resid(M1)
 plot(fechas,ye, xaxt="n", panel.first = grid(),
 type='l',col='black')
 axis.Date(1, at=ejex.mes, format="%m/%y")
-axis.Date(1, at=ejex.año, labels = FALSE, tcl = -0.2)
+axis.Date(1, at=ejex.aï¿½o, labels = FALSE, tcl = -0.2)
 
 #--------------------
 ye = ts(ye,frequency=7)
@@ -188,7 +188,7 @@ accuracy(yf,p1))
 
 (cbind(yf,p0,p1))
 
-#----------------residuos hiperbólicos?
+#----------------residuos hiperbï¿½licos?
 ?dhyp
 
 require(fBasics)

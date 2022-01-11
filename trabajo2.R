@@ -9,6 +9,8 @@ library(dplyr)
 library(knitr)
 library(reshape2)
 library(DescTools)
+library(TSA)
+library(lmtest)
 
 ## Lectura de datos
 D=dataseries::ds("ch_comb_jobs.596.tot.1.0")
@@ -35,7 +37,6 @@ plot(fecha,entreno, xaxt="n", panel.first = grid(),type='l',
 ylab='Empleos por trimestre', lwd = 1, main='Tasa de empleo en hombres en Suiza')
 axis.Date(1, at=ejex.trimestre, format="%m/%y")
 axis.Date(1, at=ejex.año, labels = FALSE, tcl = -0.2)
-
 
 ## Preparacion de los Modelo cubico + indicadoras
 t = seq(1,length(entreno))
@@ -84,29 +85,74 @@ p2 = ggplot(data = matriz2, aes(x=Fecha, y=Tasa, group = variable, colour = vari
     theme(axis.text.x = element_text(angle=45, vjust = 0.5))
 p2
 
+#Medidas de error para modelos lineales:
+medidas = function(m,y,k){
+# m = objeto producido con lm()
+# y = variable dependiente
+# k = número de coeficientes beta
+T = length(y)
+yest = fitted(m)
+sse = sum((yest-y)^2)
+ssr = sum((y-mean(y))^2) 
+mse = sse/(T-k)
+R2 = 1 - sse/ssr
+Ra2 = 1 - (T-1)*(1-R2)/(T-k)
+aic = log((T-k)*exp(2*k/T)*mse/T)
+bic = log(T^(k/T)*(T-k)*mse/T)
+M = c(Ra2, mse, aic, bic)
+names(M) = c("R2-ajus","MSE","logAIC","logBIC")
+return(M)
+}
+
+
 ## Pruebas incorrelacion
 
 ### Grafica de las fac con las bandas de Bartlett
+residuales1 = mod1$residuals
+residuales1 = ts(residuales1, frequency=4, start=c(1991,3))
+
+### Bandas de Bartlett
+acf(residuales1,60,ci.type="ma",drop.lag.0=TRUE,main="")
+pacf(residuales1,60,main="")
+
+### Si estan todas las lineas hay evidencia, sino, hay evidencia de autocorrelacion
+
 
 ### Pruebas Ljung-Box
+Box.test(residuales1, lag = 25, type = "Ljung-Box")
+
 
 ### Pruebas de Durbin-Watson
+dwtest(mod1) 
 
 ## Identificacion de modelo ARMA-SARMA
 
+
 ### Identificacion de modelo con auto.arima()
+mod_auto <- auto.arima(entreno, stationary = TRUE, seasonal = TRUE, ic = 'aicc')
+#SARMA(3,1)(2,0)[4]
 
 ### Identificacion del modelo mediante la funcion armasubsets()
-
+plot(armasubsets(entreno, 8, 8))
 ## Estimacion de los modelos con la funcion arima()
+mod2_1 <- arima(c(1,1,0), c(0,1,2), 4)
 
+### Estimacion de modelos con funcion arima()
+(5,7)(2,1)[4]
+### AIC modelos
 
+### Validacion de residuos con la fac
+
+### Prueba de Ljung-Box
 
 ## Calculo de pronosticos:
 
+
 ### C
 
+
 ### C + ARMA
+
 
 ### EE
 

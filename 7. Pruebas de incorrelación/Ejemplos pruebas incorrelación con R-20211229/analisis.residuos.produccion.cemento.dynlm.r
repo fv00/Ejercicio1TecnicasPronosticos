@@ -7,7 +7,6 @@ rm(list=ls())
 graphics.off()
 
 
-archivo = "F:/curso pronósticos/Trabajos y datos/datos semestre 02 2011/cementq.dat"
 archivo = "cementq.dat"
 
 
@@ -150,7 +149,7 @@ cpgram(r)
 Box.test(r, lag = 15, type = "Ljung-Box")
 Box.test(r, lag = 25, type = "Box-Pierce")
 
-# las pruebas DW y DWG no estan diseñadas
+# las pruebas DW y DWG no estan diseï¿½adas
 # para residuos de regresion no lineal !!!
 # no funcionan las pruebas siguientes...
 
