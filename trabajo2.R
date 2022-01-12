@@ -129,30 +129,75 @@ dwtest(mod1)
 
 
 ### Identificacion de modelo con auto.arima()
-mod_auto <- auto.arima(entreno, stationary = TRUE, seasonal = TRUE, ic = 'aicc')
-#SARMA(3,1)(2,0)[4]
-
+mod_auto <- auto.arima(residuales1, stationary = TRUE, seasonal = TRUE, ic = 'aicc')
+mod_auto2 <- arima(x = residuales1, order = c(1,0,0), seasonal = list(order= c(0,0,1), period = 4))
 ### Identificacion del modelo mediante la funcion armasubsets()
-plot(armasubsets(entreno, 8, 8))
+plot(armasubsets(residuales1, 8, 8))
 ## Estimacion de los modelos con la funcion arima()
-mod2_1 <- arima(c(1,1,0), c(0,1,2), 4)
+mod2_0 <- arima(x = residuales1, order = c(1,0,0), seasonal= list(order = c(0,0,0), period = 4))
 
-### Estimacion de modelos con funcion arima()
-(5,7)(2,1)[4]
+
+### Significancia coeficientes modelos
+coeftest(mod_auto)
+coeftest(mod_auto2)
+coeftest(mod2_0)
+
 ### AIC modelos
+AIC(mod_auto2)
+AIC(mod2_0)
 
-### Validacion de residuos con la fac
+### Se elige el modelo auto
 
-### Prueba de Ljung-Box
+
+### Grafica de las fac con las bandas de Bartlett
+residuales = mod_auto2$residuals
+residuales = ts(residuales, frequency=4, start=c(1991,3))
+
+### Bandas de Bartlett
+acf(residuales,60,ci.type="ma",drop.lag.0=TRUE,main="")
+pacf(residuales,60,main="")
+
+### Si estan todas las lineas hay evidencia, sino, hay evidencia de autocorrelacion
+
+
+### Pruebas Ljung-Box
+Box.test(residuales, lag = 25, type = "Ljung-Box")
+
 
 ## Calculo de pronosticos:
+n= 114
+m = 8
 
+tf = seq((n-m+1),n,1)
+tf2 = tf * tf
+tf3 = tf2 * tf
+Itf = It = seasonaldummy(validacion)
+nuevos = data.frame(t = tf,t2 = tf2, t3 = tf3, It = Itf)
 
 ### C
-
+pron1 = predict(mod1, nuevos )
 
 ### C + ARMA
-
+pred_e  = predict(mod_auto2,n.ahead=m)$pred
+pron2 = as.vector(pron1 + pred_e)
 
 ### EE
+pron3 = as.vector(forecast(mod_ets, m)$mean)
 
+## Calculo de medidas de error:
+
+R = rbind(accuracy(validacion,pron1), accuracy(validacion,pron2), accuracy(validacion, pron3))
+
+rownames(R) = c("C", 'C+ARMA',"EE")
+
+# compara calidad de pronosticos con calidad de ajuste
+
+
+Utheil=c(TheilU(validacion,pron1, type=2),
+TheilU(validacion,pron2, type=2), TheilU(validacion,pron3, type=2))
+
+R = cbind(R,Utheil)
+
+R = R[,-c(1,3,4)]
+
+(R)

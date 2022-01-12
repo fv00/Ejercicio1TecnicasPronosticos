@@ -44,12 +44,12 @@ y1 = fitted(M1)
 np = length(ys)
 fechas = fechas[1:np]
 ejex.mes = seq(fechas[1],fechas[np], "months")
-ejex.a�o = seq(fechas[1],fechas[np],"years")
+ejex.ano = seq(fechas[1],fechas[np],"years")
 
 
 plot(fechas,ys, xaxt="n", panel.first = grid(),type='l',col='darkgray')
 axis.Date(1, at=ejex.mes, format="%m/%y")
-axis.Date(1, at=ejex.a�o, labels = FALSE, tcl = -0.2)
+axis.Date(1, at=ejex.ano, labels = FALSE, tcl = -0.2)
 lines(fechas,y1,col='red')
 
 ye = resid(M1)
@@ -57,7 +57,7 @@ ye = resid(M1)
 plot(fechas,ye, xaxt="n", panel.first = grid(),
 type='l',col='black')
 axis.Date(1, at=ejex.mes, format="%m/%y")
-axis.Date(1, at=ejex.a�o, labels = FALSE, tcl = -0.2)
+axis.Date(1, at=ejex.ano, labels = FALSE, tcl = -0.2)
 
 #--------------------
 ye = ts(ye,frequency=7)
