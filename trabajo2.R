@@ -85,26 +85,7 @@ p2 = ggplot(data = matriz2, aes(x=Fecha, y=Tasa, group = variable, colour = vari
     theme(axis.text.x = element_text(angle=45, vjust = 0.5))
 p2
 
-#Medidas de error para modelos lineales:
-medidas = function(m,y,k){
-# m = objeto producido con lm()
-# y = variable dependiente
-# k = número de coeficientes beta
-T = length(y)
-yest = fitted(m)
-sse = sum((yest-y)^2)
-ssr = sum((y-mean(y))^2) 
-mse = sse/(T-k)
-R2 = 1 - sse/ssr
-Ra2 = 1 - (T-1)*(1-R2)/(T-k)
-aic = log((T-k)*exp(2*k/T)*mse/T)
-bic = log(T^(k/T)*(T-k)*mse/T)
-M = c(Ra2, mse, aic, bic)
-names(M) = c("R2-ajus","MSE","logAIC","logBIC")
-return(M)
-}
-
-
+# Trabajo 2
 ## Pruebas incorrelacion
 
 ### Grafica de las fac con las bandas de Bartlett
@@ -113,7 +94,7 @@ residuales1 = ts(residuales1, frequency=4, start=c(1991,3))
 
 ### Bandas de Bartlett
 acf(residuales1,60,ci.type="ma",drop.lag.0=TRUE,main="")
-pacf(residuales1,60,main="")
+# pacf(residuales1,60,main="")
 
 ### Si estan todas las lineas hay evidencia, sino, hay evidencia de autocorrelacion
 
@@ -121,32 +102,40 @@ pacf(residuales1,60,main="")
 ### Pruebas Ljung-Box
 Box.test(residuales1, lag = 25, type = "Ljung-Box")
 
+"Como el p-valor es menor a 0.05 se rechaza la hipotesis nula y se concluye los residuos del modelo de componentes estan correlacionados"
 
 ### Pruebas de Durbin-Watson
 dwtest(mod1) 
+"Con la prueba de Durbin-Watson también se obtiene el mismo resultado"
+"Se concluye asi que los residuos del modelo de componentes estan correlacionados y que no son ruido blanco, por lo tanto, se pueden modelar"
 
 ## Identificacion de modelo ARMA-SARMA
 
-
+"Se identifica el modelo ARMA-SARMA mediante la funcion autoarima, obteniendo asi el siguiente modelo candidato:"
 ### Identificacion de modelo con auto.arima()
 mod_auto <- auto.arima(residuales1, stationary = TRUE, seasonal = TRUE, ic = 'aicc')
+"El modelo que se obtiene mediante la funcion autoarima es un SARMA(2,0,0)(0,0,1)[4]"
+coeftest(mod_auto)
+"Al observar la significancia de sus coeficientes se observa que el segundo rezago autoregresivo NO es significativo y que el primero sí, por lo que se propone disminuir en una unidad al valor de p asociado al rezago autoregresivo del modelo, obteniendo asi el siguiente resultado:"
 mod_auto2 <- arima(x = residuales1, order = c(1,0,0), seasonal = list(order= c(0,0,1), period = 4))
+coeftest(mod_auto2)
+"Se observa que al disminuir en un grado el rezago autoregresivo se obtiene que todos los rezagos asociados al modelo son signficativos, por lo que por este criterio se decanta por este modelo obtenido de depurar ligeramente al modelo obtenido mediante la funcion auto.arima"
 ### Identificacion del modelo mediante la funcion armasubsets()
 plot(armasubsets(residuales1, 8, 8))
+"Desde la funcion armasubsets se observa que si se guia por el principio de parsimonia el unico rezago significativo seria el primer rezago de la parte autoregresiva, ya que el grado proximo mas alto significativo asociado al rezago autoregresivo seria el quinto rezago, ademas se tiene en cuenta que esta serie tiene estacionalidad s=4, por lo que el modelo elegido seria un SARMA(1,0,0)(0,0,0)[4]"
 ## Estimacion de los modelos con la funcion arima()
 mod2_0 <- arima(x = residuales1, order = c(1,0,0), seasonal= list(order = c(0,0,0), period = 4))
-
-
 ### Significancia coeficientes modelos
-coeftest(mod_auto)
-coeftest(mod_auto2)
 coeftest(mod2_0)
+"Al observar sus coeficientes asociados se observa que el unico rezago autoregresivo que se incluye en el modelo es significativo, por lo que se decanta por este modelo."
 
 ### AIC modelos
 AIC(mod_auto2)
 AIC(mod2_0)
 
-### Se elige el modelo auto
+"A partir de los AIC se observa que el modelo con el menor AIC es aquel obtenido al depurar ligeramente el modelo resultado de la funcion auto.arima, por lo que se decanta por este modelo"
+
+### Se elige el modelo obtenido mediante la funcion auto.arima
 
 
 ### Grafica de las fac con las bandas de Bartlett
@@ -155,14 +144,14 @@ residuales = ts(residuales, frequency=4, start=c(1991,3))
 
 ### Bandas de Bartlett
 acf(residuales,60,ci.type="ma",drop.lag.0=TRUE,main="")
-pacf(residuales,60,main="")
+# pacf(residuales,60,main="")
 
-### Si estan todas las lineas hay evidencia, sino, hay evidencia de autocorrelacion
-
+"Al imprimer las bandas de Barlett de los residuales obtenidos mediante el modelo SARMA aplicado a los residuales del modelo de componentes, se observa que ninguna linea sobrepasa las bandas de Bartlett, por lo que se tienen indicios de que estos residuales son ruido blanco"
 
 ### Pruebas Ljung-Box
 Box.test(residuales, lag = 25, type = "Ljung-Box")
 
+"Al realizar la prueba de Ljung-Box, se obtiene un valor-p mayor a 0.05, por lo que no se tiene evidencia para rechazar que los nuevos residuales obtenidos mediante el modelo SARMA son ruido blanco"
 
 ## Calculo de pronosticos:
 n= 114
@@ -200,4 +189,28 @@ R = cbind(R,Utheil)
 
 R = R[,-c(1,3,4)]
 
-(R)
+"Se realizan los pronosticos con los tres modelos y se obtienen los siguientes resultados:"
+
+
+"Se imprimen graficamente los resultados:"
+fechaf = seq(as.Date("1991/01/01"), length.out=(114), by="quarters")[(114-8+1):114]
+pronosticos = data.frame(Fecha = fechaf, Reales = validacion, Componentes = pron1, SARMA = pron2, EE = pron3)
+
+## Graficar resultados:
+matriz3 = pronosticos %>% melt(id.vars = c('Fecha'),
+                          value.name = 'Tasa')
+
+p3 = ggplot(data = matriz3, aes(x=Fecha, y=Tasa, group = variable, colour = variable)) +
+    geom_line() + ggtitle('Estimación de la tasa de empleo en hombres en Suiza') +
+    scale_x_date(date_labels = "%m-%Y", date_breaks = "6 months") +
+    theme_bw() + 
+    theme(axis.text.x = element_text(angle=45, vjust = 0.5))
+p3 
+"A simple vista se pueda observar que entre los modelos el modelo que se ajusta mejor a los datos reales sigue siendo el modelo de espacio de estados. Con la inclusion del modelo SARMA, se obtiene un modelo intermedio que aparentemente arroja valores mas consistentes que los obtenidos mediante el modelo de componentes, pero no lo suficiente como para competir con el modelo de espacio de estados."
+
+"Finalmente, se tabulan el MAPE, RMSE y U-Theil de los 3 modelos:"
+#            RMSE      MAPE      Utheil
+# C      74143.86 2.6899376 0.027134178
+# C+ARMA 53004.75 1.8040858 0.019397969
+# EE     11913.17 0.3810203 0.004359824
+"De la tabla anterior se respalda la idea planteada al concluir acerca de las graficas, ya que se observa que el modelo de espacio de estados sigue siendo el mejor candidato segun las medidas tabuladas y que el modelo de componentes+arma ocupa un valor intermedio en todas las medidas."
