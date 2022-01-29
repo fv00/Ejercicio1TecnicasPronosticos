@@ -164,7 +164,7 @@ Itf = It = seasonaldummy(validacion)
 nuevos = data.frame(t = tf,t2 = tf2, t3 = tf3, It = Itf)
 
 ### C
-pron1 = predict(mod1, nuevos )
+pron1 = predict(mod1, nuevos)
 
 ### C + ARMA
 pred_e  = predict(mod_auto2,n.ahead=m)$pred
